@@ -1,29 +1,69 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+  <!-- Define o charset e viewport para responsividade -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TODO List</title>
+  
+  <!-- Título da página -->
+  <title>TODO List - Lista de Afazeres</title>
+  
+  <!-- Estilos CSS -->
   <style>
-    body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
-    .todo { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
-    .completed { text-decoration: line-through; color: #888; }
-    button { margin-left: 10px; cursor: pointer; }
-    input[type="text"] { padding: 8px; width: 70%; }
+    /* Estilo global */
+    body {
+      font-family: Arial, sans-serif; /* Fonte */
+      max-width: 600px;               /* Largura máxima */
+      margin: 0 auto;                 /* Centraliza */
+      padding: 20px;                  /* Espaçamento interno */
+    }
+    
+    /* Estilo de cada item TODO */
+    .todo {
+      display: flex;                /* Layout flexível */
+      align-items: center;          /* Alinha itens verticalmente */
+      padding: 10px;                /* Espaçamento interno */
+      border-bottom: 1px solid #eee; /* Borda inferior */
+    }
+    
+    /* Classe para itens completados */
+    .completed {
+      text-decoration: line-through; /* Risco no texto */
+      color: #888;                   /* Cor mais clara */
+    }
+    
+    /* Estilo dos botões */
+    button {
+      margin-left: 10px;            /* Margem à esquerda */
+      cursor: pointer;              /* Cursor de ponteiro */
+    }
+    
+    /* Estilo do campo de texto */
+    input[type="text"] {
+      padding: 8px;                 /* Espaçamento interno */
+      width: 70%;                   /* Largura relativa */
+    }
   </style>
 </head>
 <body>
+  <!-- Título principal -->
   <h1>TODO List</h1>
   
   <!-- Formulário para nova tarefa -->
   <div>
+    <!-- Campo de entrada para nova tarefa -->
     <input type="text" id="new-todo" placeholder="Adicione uma nova tarefa...">
+    <!-- Botão para adicionar (chama addTodo() no click) -->
     <button onclick="addTodo()">Adicionar</button>
   </div>
 
-  <!-- Lista de Tarefas -->
+  <!-- Container onde as tarefas serão renderizadas -->
   <div id="todos-container"></div>
 
+  <!-- Inclui o arquivo JavaScript com a lógica do frontend -->
   <script src="app.js"></script>
 </body>
 </html>
+
+<!--cd D:\ProjetosGit\TODO-app\TODO-app\todo-crud -->
+<!--node server.js-->
