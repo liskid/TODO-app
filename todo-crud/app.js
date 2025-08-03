@@ -1,159 +1,316 @@
-// URL base da API - caminho relativo pois está no mesmo domínio
-const API_URL = '/todos';
-
-// Referências aos elementos DOM
+// Elementos DOM
+const authContainer = document.getElementById('auth-container');
+const appContainer = document.getElementById('app-container');
 const todosContainer = document.getElementById('todos-container');
+const loginUsername = document.getElementById('login-username');
+const loginPassword = document.getElementById('login-password');
+const registerUsername = document.getElementById('register-username');
+const registerPassword = document.getElementById('register-password');
+const registerForm = document.getElementById('register-form');
 const newTodoInput = document.getElementById('new-todo');
 
-// Quando o documento estiver carregado, carrega as tarefas
-document.addEventListener('DOMContentLoaded', loadTodos);
+// Estado da aplicação
+let currentUser = null;
 
-// Função assíncrona para carregar tarefas do servidor
-async function loadTodos() {
+// Funções de UI
+function showRegister() {
+  registerForm.classList.remove('hidden');
+}
+
+function showLogin() {
+  registerForm.classList.add('hidden');
+}
+
+function showApp() {
+  authContainer.classList.add('hidden');
+  appContainer.classList.remove('hidden');
+  loadTodos();
+}
+
+function showAuth() {
+  authContainer.classList.remove('hidden');
+  appContainer.classList.add('hidden');
+}
+
+// Verificar token ao carregar
+document.addEventListener('DOMContentLoaded', () => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    // Tentar validar token
+    fetch('/todos', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    .then(response => {
+      if (response.ok) {
+        currentUser = parseJwt(token);
+        showApp();
+      } else {
+        localStorage.removeItem('token');
+        showAuth();
+      }
+    })
+    .catch(() => {
+      localStorage.removeItem('token');
+      showAuth();
+    });
+  } else {
+    showAuth();
+  }
+});
+
+// Funções de autenticação
+async function login() {
+  const username = loginUsername.value.trim();
+  const password = loginPassword.value.trim();
+  
+  if (!username || !password) {
+    alert('Preencha usuário e senha');
+    return;
+  }
+  
   try {
-    // Faz requisição GET para a API
-    const response = await fetch(API_URL);
+    const response = await fetch('/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ username, password })
+    });
     
-    // Converte a resposta para JSON
-    const todos = await response.json();
+    const data = await response.json();
     
-    // Renderiza as tarefas na tela
-    renderTodos(todos);
+    if (response.ok) {
+      localStorage.setItem('token', data.token);
+      currentUser = parseJwt(data.token);
+      showApp();
+    } else {
+      alert(data.error || 'Erro no login');
+    }
   } catch (error) {
-    // Log de erro no console
-    console.error("Erro ao carregar tarefas:", error);
+    console.error('Erro ao fazer login:', error);
+    alert('Erro no servidor');
   }
 }
 
-// Função para renderizar a lista de tarefas
+async function register() {
+  const username = registerUsername.value.trim();
+  const password = registerPassword.value.trim();
+  
+  if (!username || !password) {
+    alert('Preencha usuário e senha');
+    return;
+  }
+  
+  try {
+    const response = await fetch('/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ username, password })
+    });
+    
+    const data = await response.json();
+    
+    if (response.ok) {
+      alert('Registro bem-sucedido! Faça login.');
+      showLogin();
+      registerUsername.value = '';
+      registerPassword.value = '';
+    } else {
+      alert(data.error || 'Erro no registro');
+    }
+  } catch (error) {
+    console.error('Erro ao registrar:', error);
+    alert('Erro no servidor');
+  }
+}
+
+function logout() {
+  localStorage.removeItem('token');
+  currentUser = null;
+  todosContainer.innerHTML = '';
+  newTodoInput.value = '';
+  loginUsername.value = '';
+  loginPassword.value = '';
+  showAuth();
+}
+
+// Funções de manipulação de TODOs
+async function loadTodos() {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch('/todos', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (!response.ok) {
+      if (response.status === 401) {
+        logout();
+      }
+      throw new Error('Erro ao carregar tarefas');
+    }
+    
+    const todos = await response.json();
+    renderTodos(todos);
+  } catch (error) {
+    console.error("Erro ao carregar tarefas:", error);
+    alert('Erro ao carregar tarefas');
+  }
+}
+
 function renderTodos(todos) {
-  // Limpa o container
   todosContainer.innerHTML = '';
   
-  // Para cada tarefa, cria um elemento HTML
   todos.forEach(todo => {
-    // Cria um div para a tarefa
     const todoElement = document.createElement('div');
-    // Adiciona classe CSS
     todoElement.className = 'todo';
-    // Armazena o ID como atributo de dados
     todoElement.dataset.id = todo.id;
 
-    // Preenche o HTML interno do elemento
     todoElement.innerHTML = `
-      <!-- Checkbox para marcar como completado -->
       <input 
         type="checkbox" 
-        ${todo.completed ? 'checked' : ''} // Pré-marca se completado
-        onchange="toggleComplete(${todo.id})" // Chama função ao mudar
+        ${todo.completed ? 'checked' : ''}
+        onchange="toggleComplete(${todo.id}, this.checked)"
       >
-      <!-- Texto da tarefa com classe condicional -->
       <span class="${todo.completed ? 'completed' : ''}">${todo.title}</span>
-      <!-- Botão para editar -->
       <button onclick="editTodo(${todo.id})">✏️</button>
-      <!-- Botão para excluir -->
       <button onclick="deleteTodo(${todo.id})">🗑️</button>
     `;
     
-    // Adiciona o elemento ao container
     todosContainer.appendChild(todoElement);
   });
 }
 
-// Função para adicionar nova tarefa
 async function addTodo() {
-  // Obtém e limpa o valor do input
   const title = newTodoInput.value.trim();
-  
-  // Valida se tem conteúdo
   if (!title) return;
 
   try {
-    // Faz requisição POST para criar nova tarefa
-    const response = await fetch(API_URL, {
+    const token = localStorage.getItem('token');
+    const response = await fetch('/todos', {
       method: 'POST',
       headers: { 
-        'Content-Type': 'application/json' // Define tipo de conteúdo
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({ title }) // Envia o título como JSON
+      body: JSON.stringify({ title })
     });
 
-    // Se a resposta for OK (status 200-299)
     if (response.ok) {
-      // Limpa o campo de input
       newTodoInput.value = '';
-      // Recarrega a lista de tarefas
       loadTodos();
+    } else if (response.status === 401) {
+      logout();
+    } else {
+      const data = await response.json();
+      alert(data.error || 'Erro ao adicionar tarefa');
     }
   } catch (error) {
     console.error("Erro ao adicionar tarefa:", error);
+    alert('Erro no servidor');
   }
 }
 
-// Função para alternar status de conclusão
-async function toggleComplete(id) {
-  // Encontra o elemento da tarefa pelo ID
-  const todoElement = document.querySelector(`.todo[data-id="${id}"]`);
-  
-  // Obtém o estado do checkbox (true/false)
-  const completed = todoElement.querySelector('input[type="checkbox"]').checked;
-  
+async function toggleComplete(id, completed) {
   try {
-    // Faz requisição PUT para atualizar o status
-    await fetch(`${API_URL}/${id}`, {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`/todos/${id}`, {
       method: 'PUT',
       headers: { 
-        'Content-Type': 'application/json' 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({ completed }) // Envia novo status
+      body: JSON.stringify({ completed })
     });
     
-    // Recarrega a lista
+    if (!response.ok) {
+      if (response.status === 401) {
+        logout();
+      }
+      throw new Error('Erro ao atualizar tarefa');
+    }
+    
     loadTodos();
   } catch (error) {
     console.error("Erro ao atualizar tarefa:", error);
+    alert('Erro ao atualizar tarefa');
   }
 }
 
-// Função para editar uma tarefa
 async function editTodo(id) {
-  // Pede novo título ao usuário
   const newTitle = prompt('Editar tarefa:');
-  
-  // Se cancelar ou string vazia, retorna
   if (!newTitle) return;
 
   try {
-    // Faz requisição PUT para atualizar o título
-    await fetch(`${API_URL}/${id}`, {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`/todos/${id}`, {
       method: 'PUT',
       headers: { 
-        'Content-Type': 'application/json' 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({ title: newTitle }) // Envia novo título
+      body: JSON.stringify({ title: newTitle })
     });
     
-    // Recarrega a lista
-    loadTodos();
+    if (response.ok) {
+      loadTodos();
+    } else if (response.status === 401) {
+      logout();
+    } else {
+      const data = await response.json();
+      alert(data.error || 'Erro ao editar tarefa');
+    }
   } catch (error) {
     console.error("Erro ao editar tarefa:", error);
+    alert('Erro no servidor');
   }
 }
 
-// Função para excluir uma tarefa
 async function deleteTodo(id) {
-  // Confirma com o usuário antes de excluir
   if (!confirm('Tem certeza que deseja excluir?')) return;
   
   try {
-    // Faz requisição DELETE
-    await fetch(`${API_URL}/${id}`, { 
-      method: 'DELETE' 
+    const token = localStorage.getItem('token');
+    const response = await fetch(`/todos/${id}`, { 
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
     });
     
-    // Recarrega a lista
-    loadTodos();
+    if (response.ok || response.status === 204) {
+      loadTodos();
+    } else if (response.status === 401) {
+      logout();
+    } else {
+      const data = await response.json();
+      alert(data.error || 'Erro ao excluir tarefa');
+    }
   } catch (error) {
     console.error("Erro ao excluir tarefa:", error);
+    alert('Erro no servidor');
+  }
+}
+
+// Função utilitária para decodificar tokens JWT
+function parseJwt(token) {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    return null;
   }
 }

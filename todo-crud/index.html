@@ -1,69 +1,85 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <!-- Define o charset e viewport para responsividade -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <!-- Título da página -->
-  <title>TODO List - Lista de Afazeres</title>
-  
-  <!-- Estilos CSS -->
+  <title>TODO List com Login</title>
   <style>
-    /* Estilo global */
     body {
-      font-family: Arial, sans-serif; /* Fonte */
-      max-width: 600px;               /* Largura máxima */
-      margin: 0 auto;                 /* Centraliza */
-      padding: 20px;                  /* Espaçamento interno */
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
     }
     
-    /* Estilo de cada item TODO */
+    .auth-container, .todo-container {
+      margin-bottom: 20px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    
+    .hidden {
+      display: none;
+    }
+    
     .todo {
-      display: flex;                /* Layout flexível */
-      align-items: center;          /* Alinha itens verticalmente */
-      padding: 10px;                /* Espaçamento interno */
-      border-bottom: 1px solid #eee; /* Borda inferior */
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      border-bottom: 1px solid #eee;
     }
     
-    /* Classe para itens completados */
     .completed {
-      text-decoration: line-through; /* Risco no texto */
-      color: #888;                   /* Cor mais clara */
+      text-decoration: line-through;
+      color: #888;
     }
     
-    /* Estilo dos botões */
     button {
-      margin-left: 10px;            /* Margem à esquerda */
-      cursor: pointer;              /* Cursor de ponteiro */
+      margin-left: 10px;
+      cursor: pointer;
     }
     
-    /* Estilo do campo de texto */
-    input[type="text"] {
-      padding: 8px;                 /* Espaçamento interno */
-      width: 70%;                   /* Largura relativa */
+    input[type="text"], input[type="password"] {
+      padding: 8px;
+      width: 70%;
+      margin-bottom: 10px;
     }
   </style>
 </head>
 <body>
-  <!-- Título principal -->
   <h1>TODO List</h1>
   
-  <!-- Formulário para nova tarefa -->
-  <div>
-    <!-- Campo de entrada para nova tarefa -->
-    <input type="text" id="new-todo" placeholder="Adicione uma nova tarefa...">
-    <!-- Botão para adicionar (chama addTodo() no click) -->
-    <button onclick="addTodo()">Adicionar</button>
+  <!-- Container de autenticação -->
+  <div id="auth-container" class="auth-container">
+    <h2>Login</h2>
+    <div>
+      <input type="text" id="login-username" placeholder="Usuário">
+      <input type="password" id="login-password" placeholder="Senha">
+      <button onclick="login()">Entrar</button>
+      <button onclick="showRegister()">Registrar</button>
+    </div>
+    
+    <h2>Registro</h2>
+    <div id="register-form" class="hidden">
+      <input type="text" id="register-username" placeholder="Usuário">
+      <input type="password" id="register-password" placeholder="Senha">
+      <button onclick="register()">Registrar</button>
+      <button onclick="showLogin()">Voltar para Login</button>
+    </div>
+  </div>
+  
+  <!-- Container principal (visível apenas quando logado) -->
+  <div id="app-container" class="todo-container hidden">
+    <div>
+      <input type="text" id="new-todo" placeholder="Adicione uma nova tarefa...">
+      <button onclick="addTodo()">Adicionar</button>
+      <button onclick="logout()" style="float: right;">Sair</button>
+    </div>
+    
+    <div id="todos-container"></div>
   </div>
 
-  <!-- Container onde as tarefas serão renderizadas -->
-  <div id="todos-container"></div>
-
-  <!-- Inclui o arquivo JavaScript com a lógica do frontend -->
   <script src="app.js"></script>
 </body>
 </html>
-
-<!--cd D:\ProjetosGit\TODO-app\TODO-app\todo-crud -->
-<!--node server.js-->
