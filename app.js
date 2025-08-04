@@ -2,23 +2,34 @@
 const authContainer = document.getElementById('auth-container');
 const appContainer = document.getElementById('app-container');
 const todosContainer = document.getElementById('todos-container');
-const loginUsername = document.getElementById('login-username');
-const loginPassword = document.getElementById('login-password');
-const registerUsername = document.getElementById('register-username');
-const registerPassword = document.getElementById('register-password');
-const registerForm = document.getElementById('register-form');
 const newTodoInput = document.getElementById('new-todo');
+const formTitle = document.getElementById('form-title');
+const submitButton = document.getElementById('submit-button');
+const toggleText = document.getElementById('toggle-text');
+const registerFields = document.getElementById('register-fields');
+const usernameInput = document.getElementById('username');
+const passwordInput = document.getElementById('password');
+const confirmPasswordInput = document.getElementById('confirm-password');
 
 // Estado da aplicação
 let currentUser = null;
+let isRegisterMode = false;
 
 // Funções de UI
-function showRegister() {
-  registerForm.classList.remove('hidden');
-}
-
-function showLogin() {
-  registerForm.classList.add('hidden');
+function toggleAuthForm() {
+  isRegisterMode = !isRegisterMode;
+  
+  if (isRegisterMode) {
+    formTitle.textContent = 'Registro';
+    submitButton.textContent = 'Registrar';
+    toggleText.textContent = 'Já tem uma conta? Faça login';
+    registerFields.style.display = 'block';
+  } else {
+    formTitle.textContent = 'Login';
+    submitButton.textContent = 'Entrar';
+    toggleText.textContent = 'Criar nova conta';
+    registerFields.style.display = 'none';
+  }
 }
 
 function showApp() {
@@ -30,6 +41,15 @@ function showApp() {
 function showAuth() {
   authContainer.classList.remove('hidden');
   appContainer.classList.add('hidden');
+  // Reset form
+  usernameInput.value = '';
+  passwordInput.value = '';
+  confirmPasswordInput.value = '';
+  isRegisterMode = false;
+  formTitle.textContent = 'Login';
+  submitButton.textContent = 'Entrar';
+  toggleText.textContent = 'Criar nova conta';
+  registerFields.style.display = 'none';
 }
 
 // Verificar token ao carregar
@@ -60,16 +80,30 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// Funções de autenticação
-async function login() {
-  const username = loginUsername.value.trim();
-  const password = loginPassword.value.trim();
+// Função unificada para autenticação
+async function handleAuth() {
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value.trim();
   
   if (!username || !password) {
     alert('Preencha usuário e senha');
     return;
   }
   
+  if (isRegisterMode) {
+    const confirmPassword = confirmPasswordInput.value.trim();
+    if (password !== confirmPassword) {
+      alert('As senhas não coincidem');
+      return;
+    }
+    await register(username, password);
+  } else {
+    await login(username, password);
+  }
+}
+
+// Funções de autenticação
+async function login(username, password) {
   try {
     const response = await fetch('/login', {
       method: 'POST',
@@ -94,15 +128,7 @@ async function login() {
   }
 }
 
-async function register() {
-  const username = registerUsername.value.trim();
-  const password = registerPassword.value.trim();
-  
-  if (!username || !password) {
-    alert('Preencha usuário e senha');
-    return;
-  }
-  
+async function register(username, password) {
   try {
     const response = await fetch('/register', {
       method: 'POST',
@@ -116,9 +142,7 @@ async function register() {
     
     if (response.ok) {
       alert('Registro bem-sucedido! Faça login.');
-      showLogin();
-      registerUsername.value = '';
-      registerPassword.value = '';
+      toggleAuthForm(); // Volta para o modo de login
     } else {
       alert(data.error || 'Erro no registro');
     }
@@ -133,10 +157,10 @@ function logout() {
   currentUser = null;
   todosContainer.innerHTML = '';
   newTodoInput.value = '';
-  loginUsername.value = '';
-  loginPassword.value = '';
   showAuth();
 }
+
+// Restante do código permanece igual...
 
 // Funções de manipulação de TODOs
 async function loadTodos() {

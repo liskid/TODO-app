@@ -44,28 +44,40 @@
       padding: 8px;
       width: 70%;
       margin-bottom: 10px;
+      display: block;
+    }
+    
+    .form-toggle {
+      margin-top: 10px;
+      color: #007bff;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    
+    #register-fields {
+      display: none;
     }
   </style>
 </head>
 <body>
   <h1>TODO List</h1>
   
-  <!-- Container de autenticação -->
+  <!-- Container de autenticação unificado -->
   <div id="auth-container" class="auth-container">
-    <h2>Login</h2>
-    <div>
-      <input type="text" id="login-username" placeholder="Usuário">
-      <input type="password" id="login-password" placeholder="Senha">
-      <button onclick="login()">Entrar</button>
-      <button onclick="showRegister()">Registrar</button>
-    </div>
-    
-    <h2>Registro</h2>
-    <div id="register-form" class="hidden">
-      <input type="text" id="register-username" placeholder="Usuário">
-      <input type="password" id="register-password" placeholder="Senha">
-      <button onclick="register()">Registrar</button>
-      <button onclick="showLogin()">Voltar para Login</button>
+    <h2 id="form-title">Login</h2>
+    <div id="auth-form">
+      <input type="text" id="username" placeholder="Usuário">
+      <input type="password" id="password" placeholder="Senha">
+      
+      <!-- Campos adicionais para registro (inicialmente ocultos) -->
+      <div id="register-fields">
+        <input type="password" id="confirm-password" placeholder="Confirmar Senha">
+      </div>
+      
+      <button id="submit-button" onclick="handleAuth()">Entrar</button>
+      <div class="form-toggle" onclick="toggleAuthForm()">
+        <span id="toggle-text">Criar nova conta</span>
+      </div>
     </div>
   </div>
   
